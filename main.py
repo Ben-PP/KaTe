@@ -7,7 +7,7 @@ from time import sleep_ms
 from mqtt import *
 from config import *
 
-SW_VERSION = "2.5.0"
+SW_VERSION = "2.6.0"
 HW_VERSION = "1.0"
 DEVICE_NAME = "KaTe Sensor"
 MANUFACTURER = "Karel Parkkola"
@@ -20,9 +20,7 @@ TEMP_STATE = f"state/{TEMP_ID}"
 HUMIDITY_STATE = f"state/{HUMIDITY_ID}"
 PRESSURE_STATE = f"state/{PRESSURE_ID}"
 GAS_STATE = f"state/{GAS_ID}"
-AVAILABILITY_TOPIC = (
-    f"homeassistant/availability/{IDENTIFIERS}"  # IDENTIFIERS is defined in config.py
-)
+AVAILABILITY_TOPIC = f"homeassistant/availability/{IDENTIFIERS}"  # IDENTIFIERS is defined in config.py
 
 
 def get_discovery_topic(uid: str):
@@ -35,7 +33,7 @@ def discover_temp_sensor(client: MQTTClient, device_data):
         "device_class": "temperature",
         "unique_id": TEMP_ID,
         "state_topic": f"{TEMP_STATE}/value",
-        "unit_of_measurement": "C",
+        "unit_of_measurement": "K",
         "availability": {
             "topic": AVAILABILITY_TOPIC,
             "payload_available": "online",
@@ -44,7 +42,13 @@ def discover_temp_sensor(client: MQTTClient, device_data):
         "device": device_data,
         "value_template": "{{ value | round(1) }}",
     }
-    client.publish(get_discovery_topic(TEMP_ID), json.dumps(discovery_data), False)
+    client.publish(
+        get_discovery_topic(TEMP_ID),
+        json.dumps(
+            discovery_data,
+        ),
+        False,
+    )
 
 
 def discover_humidity_sensor(client: MQTTClient, device_data):
@@ -62,7 +66,9 @@ def discover_humidity_sensor(client: MQTTClient, device_data):
         "device": device_data,
         "value_template": "{{ value | round(0) }}",
     }
-    client.publish(get_discovery_topic(HUMIDITY_ID), json.dumps(discovery_data), False)
+    client.publish(
+        get_discovery_topic(HUMIDITY_ID), json.dumps(discovery_data), False
+    )
 
 
 def discover_pressure_sensor(client: MQTTClient, device_data):
@@ -80,7 +86,9 @@ def discover_pressure_sensor(client: MQTTClient, device_data):
         "device": device_data,
         "value_template": "{{ value | round(2) }}",
     }
-    client.publish(get_discovery_topic(PRESSURE_ID), json.dumps(discovery_data), False)
+    client.publish(
+        get_discovery_topic(PRESSURE_ID), json.dumps(discovery_data), False
+    )
 
 
 def discover_gas_sensor(client: MQTTClient, device_data):
@@ -97,7 +105,9 @@ def discover_gas_sensor(client: MQTTClient, device_data):
         "device": device_data,
         "value_template": "{{ value | round(1) }}",
     }
-    client.publish(get_discovery_topic(GAS_ID), json.dumps(discovery_data), False)
+    client.publish(
+        get_discovery_topic(GAS_ID), json.dumps(discovery_data), False
+    )
 
 
 def discover(client: MQTTClient):
@@ -159,11 +169,14 @@ def main():
         )  # This depends on what pins you are using
         bme = BME680_I2C(i2c=i2c, address=0x76)
         bme.sea_level_pressure = 1013.25
-        temp = str(bme.temperature)
+        temp = str(bme.temperature + 273.15)
         pressure = bme.pressure
         humidity = bme.humidity
         gas_primary = bme.gas
-        gas = math.log(gas_primary) + 0.04 * math.log(gas_primary) / humidity * humidity
+        gas = (
+            math.log(gas_primary)
+            + 0.04 * math.log(gas_primary) / humidity * humidity
+        )
 
         machine.Pin(23, machine.Pin.OUT).high()
         sleep_ms(500)

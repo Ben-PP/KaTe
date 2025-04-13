@@ -8,6 +8,7 @@ UID = ""
 SSID = ""
 WIFI_PASSWORD = ""
 # MQTT credentials and broker
+MQTT_BROKER = "<ip address>"
 MQTT_USER = None
 MQTT_PASSWORD = None
 MQTT_PORT = 1883
